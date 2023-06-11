@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import mongoose, { HydratedDocument, model } from "mongoose";
+import mongoose, { HydratedDocument} from "mongoose";
 import {Instrument} from "../../instrument/schema/instrument.schema";
 import {Etudiant} from "../../etudiant/schema/etudiant.schema";
 import {Professeur} from "../../professeur/schema/professeur.schema";
@@ -19,7 +19,7 @@ export class Lecon{
     date : Date ;
 
     @Prop({type: mongoose.Types.ObjectId , ref : "Etudiant" , required : true})
-    etudiants: Etudiant;
+    etudiant: Etudiant;
 
 
 }

@@ -11,6 +11,7 @@ import {Lecon, LeconSchema} from "./schema/lecon.schema";
     ])
   ],
   controllers: [LeconController],
-  providers: [LeconService]
+  providers: [LeconService],
+  exports: [LeconService]
 })
 export class LeconModule {}
