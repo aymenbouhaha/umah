@@ -1,7 +1,7 @@
 import {IsNotEmpty, IsPhoneNumber, IsString} from "class-validator";
 
 
-export class UpdateEtudiantDto {
+export class UpdateUserDto {
 
     @IsString()
     @IsNotEmpty()
