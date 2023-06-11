@@ -7,6 +7,7 @@ import {UpdateUserDto} from "../user/dto/update-user.dto";
 import {diskStorage} from "multer";
 import {FileInterceptor} from "@nestjs/platform-express";
 import { v4 as uuidv4 } from 'uuid';
+import {ChangePasswordDto} from "../user/dto/change-password.dto";
 
 
 @Controller('etudiant')
@@ -35,6 +36,12 @@ export class EtudiantController {
   @UseGuards(JwtAuthGuard)
   deleteEtudiant(@UserDecorator() user : Partial<User>){
     return this.etudiantService.deleteEtudiant(user)
+  }
+
+  @Patch("change-password")
+  @UseGuards(JwtAuthGuard)
+  changePassword(@UserDecorator() user : Partial<User>, @Body() changePasswordDto : ChangePasswordDto){
+    return this.etudiantService.changePassword(user,changePasswordDto)
   }
 
   @Patch("profile-image")

@@ -16,6 +16,11 @@ export class UserService {
     }
 
 
+    changePassword(email : string , newPassword : string){
+        return this.userModel.updateOne({email : email}, {password : newPassword})
+    }
+
+
 
     findUserByEmailWithPassword(email : string){
         return this.userModel.findOne({email : email})

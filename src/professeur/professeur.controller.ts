@@ -8,6 +8,7 @@ import {AssginInstrumentDto} from "./dto/assgin-instrument.dto";
 import {FileInterceptor} from "@nestjs/platform-express";
 import {diskStorage} from "multer";
 import { v4 as uuidv4 } from 'uuid';
+import {ChangePasswordDto} from "../user/dto/change-password.dto";
 
 @Controller('professeur')
 export class ProfesseurController {
@@ -28,6 +29,12 @@ export class ProfesseurController {
   @UseGuards(JwtAuthGuard)
   updateProfesseur(@UserDecorator() user : Partial<User>,@Body() updateUserDto : UpdateUserDto ){
     return this.professeurService.updateProfesseur(user,updateUserDto)
+  }
+
+  @Patch("change-password")
+  @UseGuards(JwtAuthGuard)
+  changePassword(@UserDecorator() user : Partial<User>, @Body() changePasswordDto : ChangePasswordDto){
+    return this.professeurService.changePassword(user,changePasswordDto)
   }
 
 

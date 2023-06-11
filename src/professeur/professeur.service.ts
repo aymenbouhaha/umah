@@ -8,7 +8,7 @@ import {
 import {UserService} from "../user/user.service";
 import {InjectModel} from "@nestjs/mongoose";
 import {Professeur, ProfesseurDocument} from "./schema/professeur.schema";
-import {Model} from "mongoose";
+import mongoose, {Model} from "mongoose";
 import * as bcrypt from 'bcrypt';
 import {SignUpProfesseurDto} from "./dto/sign-up-professeur.dto";
 import {SignUpDto} from "../user/dto/sign-up.dto";
@@ -19,6 +19,7 @@ import {AssginInstrumentDto} from "./dto/assgin-instrument.dto";
 import {Instrument} from "../instrument/schema/instrument.schema";
 import {InstrumentService} from "../instrument/instrument.service";
 import {AppService} from "../app.service";
+import {ChangePasswordDto} from "../user/dto/change-password.dto";
 
 @Injectable()
 export class ProfesseurService {
@@ -63,6 +64,29 @@ export class ProfesseurService {
 
     findByMail(email: string) {
         return this.professeurModel.findOne({email: email},{password : 0 , salt : 0}).populate("instruments");
+    }
+
+
+    async changePassword(user: Partial<User>, changePasswordDto: ChangePasswordDto) {
+        const professor = await this.findByMail(user.email)
+        const previousPasswordHashed= await bcrypt.hash(changePasswordDto.previousPassword,professor.salt)
+        if (previousPasswordHashed!=professor.password){
+            throw new BadRequestException("Mot de passe invalide")
+        }
+        const newPasswordHashed= await bcrypt.hash(changePasswordDto.newPassword,professor.salt)
+        const session = await mongoose.startSession()
+        session.startTransaction()
+        try {
+            await this.userService.changePassword(user.email,newPasswordHashed)
+            const updated= await this.professeurModel.updateOne({email : user.email},{password : newPasswordHashed})
+            await session.commitTransaction();
+            await session.endSession()
+            return updated
+        }catch (e) {
+            await session.abortTransaction()
+            await session.endSession()
+            throw new ConflictException("Une erreur est survenue")
+        }
     }
 
 

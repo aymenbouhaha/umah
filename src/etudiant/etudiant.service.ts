@@ -2,12 +2,13 @@ import {BadRequestException, ConflictException, Injectable, UnauthorizedExceptio
 import {UserService} from "../user/user.service";
 import {InjectModel} from "@nestjs/mongoose";
 import {Etudiant, EtudiantDocument} from "./schema/etudiant.schema";
-import {Model} from "mongoose";
+import mongoose, {Model} from "mongoose";
 import * as bcrypt from 'bcrypt';
 import {SignUpDto} from "../user/dto/sign-up.dto";
 import {RoleEnum} from "../user/enum/role.enum";
 import {User} from "../user/schema/user.schema";
 import {UpdateUserDto} from "../user/dto/update-user.dto";
+import {ChangePasswordDto} from "../user/dto/change-password.dto";
 
 @Injectable()
 export class EtudiantService {
@@ -61,6 +62,30 @@ export class EtudiantService {
             throw new ConflictException("Une Erreur est survenue")
         }
     }
+
+
+    async changePassword(user: Partial<User>, changePasswordDto: ChangePasswordDto) {
+        const etudiant = await this.findByMail(user.email)
+        const previousPasswordHashed= await bcrypt.hash(changePasswordDto.previousPassword,etudiant.salt)
+        if (previousPasswordHashed!=etudiant.password){
+            throw new BadRequestException("Mot de passe invalide")
+        }
+        const newPasswordHashed= await bcrypt.hash(changePasswordDto.newPassword,etudiant.salt)
+        const session = await mongoose.startSession()
+        session.startTransaction()
+        try {
+            await this.userService.changePassword(user.email,newPasswordHashed)
+            const updated= await this.etudiantModel.updateOne({email : user.email},{password : newPasswordHashed})
+            await session.commitTransaction();
+            await session.endSession()
+            return updated
+        }catch (e) {
+            await session.abortTransaction()
+            await session.endSession()
+            throw new ConflictException("Une erreur est survenue")
+        }
+    }
+
 
 
     findAll(){
