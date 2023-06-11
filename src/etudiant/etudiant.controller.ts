@@ -1,9 +1,13 @@
-import {Body, Controller, Delete, Get, Param, Patch, UseGuards} from '@nestjs/common';
+import {Body, Controller, Delete, Get, Param, Patch, UploadedFile, UseGuards, UseInterceptors} from '@nestjs/common';
 import { EtudiantService } from './etudiant.service';
 import {JwtAuthGuard} from "../auth/guards/jwt-auth.guard";
 import {UserDecorator} from "../decorators/user.decorator";
 import {User} from "../user/schema/user.schema";
 import {UpdateUserDto} from "../user/dto/update-user.dto";
+import {diskStorage} from "multer";
+import {FileInterceptor} from "@nestjs/platform-express";
+import { v4 as uuidv4 } from 'uuid';
+
 
 @Controller('etudiant')
 export class EtudiantController {
@@ -31,6 +35,23 @@ export class EtudiantController {
   @UseGuards(JwtAuthGuard)
   deleteEtudiant(@UserDecorator() user : Partial<User>){
     return this.etudiantService.deleteEtudiant(user)
+  }
+
+  @Patch("profile-image")
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(
+      FileInterceptor('profileImage', {
+        storage: diskStorage({
+          destination: './public/uploads/profiles/avatar',
+          filename: (req, file, cb) => {
+            const randomName = uuidv4() + '-' + file.originalname;
+            cb(null, randomName);
+          },
+        }),
+      }),
+  )
+  addProfilePicture(@UserDecorator() user : Partial<User>, @UploadedFile() profileImage : Express.Multer.File){
+    return this.etudiantService.addProfilePicture(user,profileImage)
   }
 
 }

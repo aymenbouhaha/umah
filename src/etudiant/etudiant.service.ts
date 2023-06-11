@@ -52,6 +52,16 @@ export class EtudiantService {
     }
 
 
+    async addProfilePicture(user: Partial<User>, image: Express.Multer.File) {
+        const profileImage = this.userService.resolveProfileImage(image)
+        try {
+            await this.userService.addProfilePicture(user.email,profileImage)
+            return await this.etudiantModel.updateOne({email : user.email},{profileImage: profileImage}).exec()
+        } catch (e) {
+            throw new ConflictException("Une Erreur est survenue")
+        }
+    }
+
 
     findAll(){
         return this.etudiantModel.find({},{password : 0, salt : 0})

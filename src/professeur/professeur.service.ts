@@ -66,6 +66,17 @@ export class ProfesseurService {
     }
 
 
+    async addProfilePicture(user: Partial<User>, image: Express.Multer.File) {
+        const profileImage = this.userService.resolveProfileImage(image)
+        try {
+            await this.userService.addProfilePicture(user.email,profileImage)
+            return await this.professeurModel.updateOne({email : user.email},{profileImage: profileImage}).exec()
+        } catch (e) {
+            throw new ConflictException("Une Erreur est survenue")
+        }
+    }
+
+
     async assignInstrument(user: Partial<User>, instrumentsDto: AssginInstrumentDto) {
         if (user.role != RoleEnum.PROFESSEUR) {
             throw new UnauthorizedException()

@@ -45,6 +45,11 @@ export class UserService {
     }
 
 
+    async addProfilePicture(email,imageUrl : string){
+        return this.userModel.updateOne({email : email},{profileImage : imageUrl},{new : true}).exec()
+    }
+
+
     async updateUser(user : Partial<User>, updateDto : UpdateUserDto){
         return this.userModel.updateOne({email : user.email}, {...updateDto}).projection({password : 0 , salt : 0}).exec()
     }
@@ -52,6 +57,14 @@ export class UserService {
 
     async deleteUser(user : Partial<User>){
         return this.userModel.deleteOne({email : user.email}).exec()
+    }
+
+    resolveProfileImage(avatar: Express.Multer.File): string {
+        let photo;
+        if (avatar) {
+            photo = avatar.path.replace('public', '').split('\\').join('/');
+        }
+        return photo;
     }
 
 }
