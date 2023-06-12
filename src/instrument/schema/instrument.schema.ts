@@ -20,6 +20,8 @@ export class Instrument {
     })
     category: string;
 
+    @Prop()
+    imageUrl : string
 }
 
 export const InstrumentSchema = SchemaFactory.createForClass(Instrument);

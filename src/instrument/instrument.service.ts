@@ -18,12 +18,14 @@ export class InstrumentService {
     }
 
 
-    async createInstrument(user : Partial<User>,instrumentInfo: CreateInstrumentDto) {
+    async createInstrument(user : Partial<User>,instrumentInfo: CreateInstrumentDto,image : Express.Multer.File) {
         if (user.role!=RoleEnum.ADMIN){
             throw new UnauthorizedException()
         }
+        const imageUrl=this.resolveImage(image)
         const instrument = new this.instrumentModel({
-            ...instrumentInfo
+            ...instrumentInfo,
+            imageUrl : imageUrl
         })
         try {
             return await instrument.save()
@@ -71,6 +73,15 @@ export class InstrumentService {
         } catch (e) {
             throw new ConflictException("Une erreur est survenue lors de la mise à jour")
         }
+    }
+
+
+    resolveImage(image: Express.Multer.File): string {
+        let photo;
+        if (image) {
+            photo = image.path.replace('public', '').split('\\').join('/');
+        }
+        return photo;
     }
 
 

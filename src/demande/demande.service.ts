@@ -102,11 +102,11 @@ export class DemandeService {
                 populate : ["etudiant", "professeur", "instrument"]
             })
         }if (user.role==RoleEnum.ETUDIANT){
-            return this.demandeModel.find({status : RequestStatus.PENDING , etudiant : user},{},{
+            return this.demandeModel.find({status : RequestStatus.PENDING , etudiant : user._id},{},{
                 populate : ["professeur", "instrument"]
             })
         }else {
-            return this.demandeModel.find({status : RequestStatus.PENDING , professeur : user},{},{
+            return this.demandeModel.find({status : RequestStatus.PENDING , professeur : user._id},{},{
                 populate : ["etudiant" , "instrument"]
             })
         }
@@ -116,7 +116,7 @@ export class DemandeService {
 
     getAcceptedAndRefusedRequests(user: Partial<User>){
         if (user.role==RoleEnum.ETUDIANT){
-            return this.demandeModel.find({status : { $in : [RequestStatus.ACCEPTED, RequestStatus.REFUSED]} , etudiant : user},{},{
+            return this.demandeModel.find({status : { $in : [RequestStatus.ACCEPTED, RequestStatus.REFUSED]} , etudiant : user._id},{},{
                 populate : ["professeur", "instrument"]
             })
         }
