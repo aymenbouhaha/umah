@@ -45,7 +45,7 @@ export class DemandeService {
             throw new NotFoundException("le professeur n'existe pas")
         }
         const instrument = await this.instrumentService.getInstrumentByName(makeRequestDto.instrumentName)
-        if (!instrument || prof.instruments.find((existingInstrument)=>instrument.name==existingInstrument.name)){
+        if (!instrument || !prof.instruments.find((existingInstrument)=>instrument.name==existingInstrument.name)){
             throw new NotFoundException("L'instrument n'existe pas")
         }
 
@@ -76,23 +76,20 @@ export class DemandeService {
         if (!request){
             throw new BadRequestException("La demande n'existe pas")
         }
-        if (request.professeur._id!=user._id){
+        if (request.professeur._id.toString()!=user._id.toString()){
             throw new UnauthorizedException()
         }
         if (changeStatusDto.status==RequestStatus.REFUSED){
             return await this.demandeModel.updateOne({_id : changeStatusDto.requestId},{status : changeStatusDto.status}).exec()
         }else {
-            const session = await mongoose.startSession()
-            session.startTransaction()
             try {
+                const teacher=await this.professeurService.findByMail(user.email)
                 const newCourse =await this.leconService.createCourse(request)
+                teacher.lecons.push(newCourse)
+                await teacher.save()
                 await this.demandeModel.updateOne({_id: changeStatusDto.requestId}, {status : changeStatusDto.status}).exec()
-                await session.commitTransaction()
-                await session.endSession()
                 return newCourse
             }catch (e) {
-                await session.abortTransaction()
-                await session.endSession()
                 throw new ConflictException("Une erreur est survenue veuillez réessayer")
             }
         }

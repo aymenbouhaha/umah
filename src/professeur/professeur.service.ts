@@ -63,7 +63,9 @@ export class ProfesseurService {
 
 
     findByMail(email: string) {
-        return this.professeurModel.findOne({email: email},{password : 0 , salt : 0}).populate("instruments");
+        return this.professeurModel.findOne({email: email},{password : 0 , salt : 0},{
+            populate : ["instruments"]
+        });
     }
 
 
@@ -124,7 +126,9 @@ export class ProfesseurService {
 
 
     findAll(){
-        return this.professeurModel.find({},{password : 0, salt : 0}).populate("instruments")
+        return this.professeurModel.find({},{password : 0, salt : 0},{
+            populate : ["instruments", "lecons"]
+        })
     }
 
 
@@ -149,7 +153,9 @@ export class ProfesseurService {
 
 
     async findById(id : string){
-        return this.professeurModel.findById(id).projection({password : 0 , salt : 0}).populate("instruments")
+        return this.professeurModel.findById(id, {password : 0 , salt : 0},{
+            populate : ["instruments"]
+        })
     }
 
 
