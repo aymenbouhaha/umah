@@ -1,4 +1,15 @@
-import {Body, Controller, Delete, Get, Param, Patch, UploadedFile, UseGuards, UseInterceptors} from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors
+} from '@nestjs/common';
 import { ProfesseurService } from './professeur.service';
 import {JwtAuthGuard} from "../auth/guards/jwt-auth.guard";
 import {UserDecorator} from "../decorators/user.decorator";
@@ -55,6 +66,13 @@ export class ProfesseurController {
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(
       FileInterceptor('profileImage', {
+        fileFilter :
+            (req, file, callback)=>{
+              if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/)) {
+                return callback(new BadRequestException('Vous pouvez ajouter que des images'), false);
+              }
+              callback(null, true);
+            },
         storage: diskStorage({
           destination: './public/uploads/profiles/avatar',
           filename: (req, file, cb) => {

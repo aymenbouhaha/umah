@@ -70,23 +70,16 @@ export class ProfesseurService {
 
 
     async changePassword(user: Partial<User>, changePasswordDto: ChangePasswordDto) {
-        const professor = await this.findByMail(user.email)
+        const professor = await this.professeurModel.findOne({email : user.email})
         const previousPasswordHashed= await bcrypt.hash(changePasswordDto.previousPassword,professor.salt)
         if (previousPasswordHashed!=professor.password){
             throw new BadRequestException("Mot de passe invalide")
         }
         const newPasswordHashed= await bcrypt.hash(changePasswordDto.newPassword,professor.salt)
-        const session = await mongoose.startSession()
-        session.startTransaction()
         try {
             await this.userService.changePassword(user.email,newPasswordHashed)
-            const updated= await this.professeurModel.updateOne({email : user.email},{password : newPasswordHashed})
-            await session.commitTransaction();
-            await session.endSession()
-            return updated
+            return  await this.professeurModel.updateOne({email : user.email},{password : newPasswordHashed})
         }catch (e) {
-            await session.abortTransaction()
-            await session.endSession()
             throw new ConflictException("Une erreur est survenue")
         }
     }

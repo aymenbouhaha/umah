@@ -53,6 +53,7 @@ export class EtudiantService {
     }
 
 
+
     async addProfilePicture(user: Partial<User>, image: Express.Multer.File) {
         const profileImage = this.userService.resolveProfileImage(image)
         try {
@@ -65,23 +66,17 @@ export class EtudiantService {
 
 
     async changePassword(user: Partial<User>, changePasswordDto: ChangePasswordDto) {
-        const etudiant = await this.findByMail(user.email)
+        const etudiant = await this.etudiantModel.findOne({email : user.email})
         const previousPasswordHashed= await bcrypt.hash(changePasswordDto.previousPassword,etudiant.salt)
         if (previousPasswordHashed!=etudiant.password){
             throw new BadRequestException("Mot de passe invalide")
         }
         const newPasswordHashed= await bcrypt.hash(changePasswordDto.newPassword,etudiant.salt)
-        const session = await mongoose.startSession()
-        session.startTransaction()
         try {
             await this.userService.changePassword(user.email,newPasswordHashed)
-            const updated= await this.etudiantModel.updateOne({email : user.email},{password : newPasswordHashed})
-            await session.commitTransaction();
-            await session.endSession()
-            return updated
+            return await this.etudiantModel.updateOne({email : user.email},{password : newPasswordHashed})
+
         }catch (e) {
-            await session.abortTransaction()
-            await session.endSession()
             throw new ConflictException("Une erreur est survenue")
         }
     }
