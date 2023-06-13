@@ -138,9 +138,10 @@ export class ProfesseurService {
                 {email : user.email},
                 {...updateEtudiantDto},
                 {
+                    projection :{password : 0 , salt : 0},
                     new : true
                 }
-            ).projection({password : 0 , salt : 0}).exec()
+            ).exec()
             const newUser = await this.userService.updateUser(user, updateEtudiantDto)
             return newProfesseur
         }catch (e) {

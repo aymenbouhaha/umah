@@ -56,7 +56,7 @@ export class UserService {
 
 
     async updateUser(user : Partial<User>, updateDto : UpdateUserDto){
-        return this.userModel.updateOne({email : user.email}, {...updateDto}).projection({password : 0 , salt : 0}).exec()
+        return this.userModel.updateOne({email : user.email}, {...updateDto},{projection : {password : 0 , salt : 0}}).exec()
     }
 
 
