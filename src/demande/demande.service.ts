@@ -11,7 +11,7 @@ import {MakeRequestDto} from "./dto/make-request.dto";
 import {ProfesseurService} from "../professeur/professeur.service";
 import {InjectModel} from "@nestjs/mongoose";
 import {Demande, DemandeDocument} from "./schema/demande.schema";
-import mongoose, {Model} from "mongoose";
+import  {Model} from "mongoose";
 import {InstrumentService} from "../instrument/instrument.service";
 import {ChangeStatusDto} from "./dto/change-status.dto";
 import {AppService} from "../app.service";
@@ -102,7 +102,7 @@ export class DemandeService {
                 populate : ["etudiant", "professeur", "instrument"]
             })
         }if (user.role==RoleEnum.ETUDIANT){
-            return this.demandeModel.find({status : RequestStatus.PENDING , etudiant : user._id},{},{
+            return this.demandeModel.find({status : { $in : [RequestStatus.ACCEPTED, RequestStatus.REFUSED]} , etudiant : user._id},{},{
                 populate : ["professeur", "instrument"]
             })
         }else {
@@ -113,14 +113,6 @@ export class DemandeService {
     }
 
 
-
-    getAcceptedAndRefusedRequests(user: Partial<User>){
-        if (user.role==RoleEnum.ETUDIANT){
-            return this.demandeModel.find({status : { $in : [RequestStatus.ACCEPTED, RequestStatus.REFUSED]} , etudiant : user._id},{},{
-                populate : ["professeur", "instrument"]
-            })
-        }
-    }
 
 
 }

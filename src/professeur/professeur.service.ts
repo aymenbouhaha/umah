@@ -131,6 +131,10 @@ export class ProfesseurService {
         })
     }
 
+    updateProfesseurWithPredicate(profId : string,predicate){
+        return this.professeurModel.updateOne({_id : profId},predicate).exec()
+    }
+
 
     async updateProfesseur(user: Partial<User>, updateEtudiantDto: UpdateUserDto) {
         if (user.role!=RoleEnum.PROFESSEUR) {

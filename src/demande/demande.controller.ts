@@ -31,10 +31,6 @@ export class DemandeController {
     return this.demandeService.updateRequestStatus(user,changeStatusDto)
   }
 
-  @Get("etudiant")
-  @UseGuards(JwtAuthGuard)
-  getRequestsForStudent(@UserDecorator() user : Partial<User>){
-    return this.demandeService.getAcceptedAndRefusedRequests(user)
-  }
+
 
 }
