@@ -17,6 +17,7 @@ import {ChangeStatusDto} from "./dto/change-status.dto";
 import {AppService} from "../app.service";
 import {LeconService} from "../lecon/lecon.service";
 import {RequestStatus} from "./enum/request-status";
+import {SELECT_STRING} from "../user/generics/constants";
 
 @Injectable()
 export class DemandeService {
@@ -71,7 +72,19 @@ export class DemandeService {
             throw new BadRequestException("L'id de la demande est invalide")
         }
         const request =await this.demandeModel.findById(changeStatusDto.requestId,{},{
-            populate : ["instrument", "professeur", "etudiant"]
+            populate : [
+                {
+                    path : "instrument",
+                },
+                {
+                    path : "etudiant",
+                    select : SELECT_STRING
+                },
+                {
+                    path : "professeur",
+                    select : SELECT_STRING
+                }
+                ]
         })
         if (!request){
             throw new BadRequestException("La demande n'existe pas")
@@ -99,15 +112,43 @@ export class DemandeService {
     getAllRequest(user : Partial<User>){
         if (user.role==RoleEnum.ADMIN){
             return this.demandeModel.find({status : RequestStatus.PENDING},{},{
-                populate : ["etudiant", "professeur", "instrument"]
+                populate : [
+                    {
+                        path : "instrument",
+                    },
+                    {
+                        path : "etudiant",
+                        select : SELECT_STRING
+                    },
+                    {
+                        path : "professeur",
+                        select : SELECT_STRING
+                    }
+                ]
             })
         }if (user.role==RoleEnum.ETUDIANT){
             return this.demandeModel.find({status : { $in : [RequestStatus.ACCEPTED, RequestStatus.REFUSED]} , etudiant : user._id},{},{
-                populate : ["professeur", "instrument"]
+                populate : [
+                    {
+                        path : "instrument",
+                    },
+                    {
+                        path : "professeur",
+                        select : SELECT_STRING
+                    }
+                ]
             })
         }else {
             return this.demandeModel.find({status : RequestStatus.PENDING , professeur : user._id},{},{
-                populate : ["etudiant" , "instrument"]
+                populate : [
+                    {
+                        path : "instrument",
+                    },
+                    {
+                        path : "etudiant",
+                        select : SELECT_STRING
+                    },
+                ]
             })
         }
     }
