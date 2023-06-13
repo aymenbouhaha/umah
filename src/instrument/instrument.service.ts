@@ -22,15 +22,19 @@ export class InstrumentService {
         if (user.role!=RoleEnum.ADMIN){
             throw new UnauthorizedException()
         }
+        const existingInstrument=await this.instrumentModel.findOne({name : instrumentInfo.name.toUpperCase()})
+        if (existingInstrument){
+            throw new BadRequestException("L'instrument existe deja")
+        }
         const imageUrl=this.resolveImage(image)
         const instrument = new this.instrumentModel({
-            ...instrumentInfo,
+            name : instrumentInfo.name.toUpperCase(),
+            category : instrumentInfo.category.toUpperCase(),
             imageUrl : imageUrl
         })
         try {
             return await instrument.save()
         } catch (e) {
-            console.log(e)
             throw new BadRequestException("L'instrument n'est pas ajouté")
         }
     }

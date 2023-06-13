@@ -30,8 +30,7 @@ export class InstrumentController {
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(
       FileInterceptor('instrumentImage', {
-        fileFilter :
-            (req, file, callback)=>{
+        fileFilter : (req, file, callback)=>{
               if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/)) {
                 return callback(new BadRequestException('Vous pouvez ajouter que des images'), false);
               }
