@@ -86,6 +86,12 @@ export class ProfesseurController {
     return this.professeurService.addProfilePicture(user,profileImage)
   }
 
+  @Delete("instrument/:id")
+  @UseGuards(JwtAuthGuard)
+  deleteInstrument(@UserDecorator() user : Partial<User>,@Param("id") instrumentId : string){
+    return this.professeurService.deleteInstrument(user,instrumentId)
+  }
+
 
 
 }

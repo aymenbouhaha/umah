@@ -35,6 +35,7 @@ export class LeconService {
 
     getAllCourse(user : Partial<User>){
         if (user.role==RoleEnum.ADMIN){
+            console.log("from admin")
             return this.courseModel.find({},{},{
                 populate : [
                     {
@@ -51,6 +52,7 @@ export class LeconService {
                 ]
             })
         }else if (user.role==RoleEnum.ETUDIANT){
+            console.log("from etudiant")
             return this.courseModel.find({etudiant : user._id},{},{
                 populate : [
                     {
@@ -64,6 +66,7 @@ export class LeconService {
                 ]
             })
         }else {
+            console.log("from professor")
             return this.courseModel.find({professeur : user._id},{},{
                 populate : [
                     {

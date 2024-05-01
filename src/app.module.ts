@@ -10,6 +10,8 @@ import { ProfesseurModule } from './professeur/professeur.module';
 import { UserModule } from './user/user.module';
 import {MongooseModule} from "@nestjs/mongoose";
 import {ConfigModule} from "@nestjs/config";
+import {RequestLoggingInterceptor} from "./log.interceptor";
+import {APP_INTERCEPTOR} from "@nestjs/core";
 
 @Module({
   imports: [
@@ -20,13 +22,19 @@ import {ConfigModule} from "@nestjs/config";
       LeconModule,
       ProfesseurModule,
       UserModule,
-      MongooseModule.forRoot("mongodb://localhost:27017/umah",),
+      MongooseModule.forRoot("mongodb+srv://chaimagharbi:NyGxMl8Wc8pxxjvd@cluster0.k6mgz30.mongodb.net/umah",),
       ConfigModule.forRoot({
           isGlobal : true
       }),
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+      AppService,
+      {
+          provide: APP_INTERCEPTOR,
+          useClass: RequestLoggingInterceptor,
+      }
+  ],
     exports: [AppService]
 })
 export class AppModule {}

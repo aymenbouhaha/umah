@@ -51,7 +51,7 @@ export class DemandeService {
         }
 
         const request= new this.demandeModel({
-            etudiant : user,
+            etudiant : user._id,
             professeur : prof,
             instrument : instrument,
             date : makeRequestDto.date

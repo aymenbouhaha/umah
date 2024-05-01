@@ -8,7 +8,7 @@ import {
 import {UserService} from "../user/user.service";
 import {InjectModel} from "@nestjs/mongoose";
 import {Professeur, ProfesseurDocument} from "./schema/professeur.schema";
-import mongoose, {Model} from "mongoose";
+import {Model} from "mongoose";
 import * as bcrypt from 'bcrypt';
 import {SignUpProfesseurDto} from "./dto/sign-up-professeur.dto";
 import {SignUpDto} from "../user/dto/sign-up.dto";
@@ -61,12 +61,16 @@ export class ProfesseurService {
 
     }
 
+    findProf(email : string){
+        return this.professeurModel.findOne({email : email},{password: 0, salt : 0},{populate : ["instruments"]})
+    }
 
     findByMail(email: string) {
         return this.professeurModel.findOne({email: email},{password : 0 , salt : 0},{
             populate : ["instruments"]
         });
     }
+
 
 
     async changePassword(user: Partial<User>, changePasswordDto: ChangePasswordDto) {
@@ -89,7 +93,10 @@ export class ProfesseurService {
         const profileImage = this.userService.resolveProfileImage(image)
         try {
             await this.userService.addProfilePicture(user.email,profileImage)
-            return await this.professeurModel.updateOne({email : user.email},{profileImage: profileImage}).exec()
+            await this.professeurModel.updateOne({email : user.email},{profileImage: profileImage}).exec()
+            return {
+                profileImage: profileImage
+            };
         } catch (e) {
             throw new ConflictException("Une Erreur est survenue")
         }
@@ -110,8 +117,9 @@ export class ProfesseurService {
             throw new NotFoundException("Au moins l'un des instruments n'existe pas")
         }
         try {
-            return await this.professeurModel.updateOne({email : user.email},{instruments : instruments},{new : true})
+            await this.professeurModel.updateOne({email : user.email},{$push : {instruments : {$each : instrumentsDto.idList}}},{new : true})
                 .exec()
+            return instruments;
         }catch (e){
             throw new ConflictException("Une erreur est survenue veuillez réessayer")
         }
@@ -119,10 +127,56 @@ export class ProfesseurService {
 
 
     findAll(){
-        return this.professeurModel.find({},{password : 0, salt : 0},{
-            populate : ["instruments", "lecons"]
-        })
+        return this.professeurModel.aggregate([
+            {
+                $lookup: {
+                    from: 'lecons',
+                    localField: '_id',
+                    foreignField: 'professeur',
+                    as: 'lecons',
+                },
+            },
+            {
+                $lookup: {
+                    from: 'instruments',
+                    localField: 'instruments',
+                    foreignField: '_id',
+                    as: 'instrumentObjects',
+                },
+            },
+            {
+                $addFields: {
+                    leconsBeforeToday: {
+                        $filter: {
+                            input: '$lecons',
+                            as: 'lecon',
+                            cond: {
+                                $lt: ['$$lecon.date', new Date()],
+                            },
+                        },
+                    },
+                },
+            },
+            {
+                $project: {
+                    firstname : 1,
+                    lastname : 1,
+                    phoneNumber:1,
+                    dateBirth:1,
+                    email:1,
+                    profileImage:1,
+                    role :1,
+                    cin :1,
+                    address :1,
+                    instruments : '$instrumentObjects',
+                    courseCount: {
+                        $size: '$leconsBeforeToday',
+                    },
+                },
+            },
+        ]);
     }
+
 
     updateProfesseurWithPredicate(profId : string,predicate){
         return this.professeurModel.updateOne({_id : profId},predicate).exec()
@@ -146,6 +200,33 @@ export class ProfesseurService {
             return newProfesseur
         }catch (e) {
             throw new ConflictException("Une erreur est survenue veuillez réessayer")
+        }
+    }
+
+    async deleteInstrument(user: Partial<User | Professeur>, instrumentId: string) {
+        const professor=user as  Professeur
+        if (user.role != RoleEnum.PROFESSEUR) {
+            throw new UnauthorizedException()
+        }
+        if (!this.appService.isObjectIdValid(instrumentId)) {
+            throw new BadRequestException("L'id est invalide")
+        }
+        const instrument = await this.instrumentService.getInstrumentById(instrumentId)
+        if (!instrument){
+            throw new NotFoundException("L'instrument n'existe pas")
+        }
+        if (!professor.instruments.find((instrument)=> instrument._id==instrumentId)){
+            throw new NotFoundException("L'instrument n'existe pas")
+        }
+        try {
+            return await this.professeurModel.updateOne(
+                {_id : user._id},
+                {
+                    $pull : { instruments : instrumentId}
+                }
+            )
+        }catch (e) {
+            throw new ConflictException("Une erreur est survenue lors de la suppression")
         }
     }
 

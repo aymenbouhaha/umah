@@ -7,7 +7,6 @@ import {UserService} from "../../user/user.service";
 import {ProfesseurService} from "../../professeur/professeur.service";
 import {EtudiantService} from "../../etudiant/etudiant.service";
 import {Etudiant} from "../../etudiant/schema/etudiant.schema";
-import {Professeur} from "../../professeur/schema/professeur.schema";
 import {RoleEnum} from "../../user/enum/role.enum";
 
 @Injectable()

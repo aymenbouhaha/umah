@@ -1,14 +1,25 @@
-import {BadRequestException, ConflictException, Injectable, UnauthorizedException} from '@nestjs/common';
+import {
+    BadRequestException,
+    ConflictException,
+    Injectable,
+    NotFoundException,
+    UnauthorizedException
+} from '@nestjs/common';
 import {UserService} from "../user/user.service";
 import {InjectModel} from "@nestjs/mongoose";
 import {Etudiant, EtudiantDocument} from "./schema/etudiant.schema";
-import mongoose, {Model} from "mongoose";
+import  {Model} from "mongoose";
 import * as bcrypt from 'bcrypt';
 import {SignUpDto} from "../user/dto/sign-up.dto";
 import {RoleEnum} from "../user/enum/role.enum";
 import {User} from "../user/schema/user.schema";
 import {UpdateUserDto} from "../user/dto/update-user.dto";
 import {ChangePasswordDto} from "../user/dto/change-password.dto";
+import {AssginInstrumentDto} from "../professeur/dto/assgin-instrument.dto";
+import {Instrument} from "../instrument/schema/instrument.schema";
+import {AppService} from "../app.service";
+import {InstrumentService} from "../instrument/instrument.service";
+import {Professeur} from "../professeur/schema/professeur.schema";
 
 @Injectable()
 export class EtudiantService {
@@ -17,7 +28,9 @@ export class EtudiantService {
     constructor(
         private userService : UserService,
         @InjectModel(Etudiant.name)
-        private etudiantModel : Model<EtudiantDocument>
+        private etudiantModel : Model<EtudiantDocument>,
+        private appService : AppService,
+        private instrumentService : InstrumentService
     ) {
     }
 
@@ -52,15 +65,46 @@ export class EtudiantService {
         return this.etudiantModel.findOne({email: email},{password : 0 , salt : 0});
     }
 
+    findEtudiant(email :string){
+        return this.etudiantModel.findOne({email : email}, {password: 0, salt : 0},{populate : ["instruments"]})
+    }
+
 
 
     async addProfilePicture(user: Partial<User>, image: Express.Multer.File) {
         const profileImage = this.userService.resolveProfileImage(image)
         try {
             await this.userService.addProfilePicture(user.email,profileImage)
-            return await this.etudiantModel.updateOne({email : user.email},{profileImage: profileImage}).exec()
+            await this.etudiantModel.updateOne({email : user.email},{profileImage: profileImage}).exec()
+            return {
+                profileImage : profileImage
+            }
         } catch (e) {
             throw new ConflictException("Une Erreur est survenue")
+        }
+    }
+
+    async assignInstrument(user: Partial<User>, instrumentsDto: AssginInstrumentDto) {
+        if (user.role != RoleEnum.ETUDIANT) {
+            throw new UnauthorizedException()
+        }
+        instrumentsDto.idList.forEach((id)=>{
+            if (!this.appService.isObjectIdValid(id)){
+                throw new BadRequestException("L'un des id est invalide")
+            }
+        })
+        const instruments : Instrument[]=await this.instrumentService.getInstrumentsMatchingIds(instrumentsDto.idList)
+        if (instruments.length!=instrumentsDto.idList.length){
+            throw new NotFoundException("Au moins l'un des instruments n'existe pas")
+        }
+        try {
+            await this.etudiantModel.updateOne({email : user.email},
+                {$push : {instruments : {$each : instruments }}},
+                {new : true})
+                .exec()
+            return instruments;
+        }catch (e){
+            throw new ConflictException("Une erreur est survenue veuillez réessayer")
         }
     }
 
@@ -78,6 +122,33 @@ export class EtudiantService {
 
         }catch (e) {
             throw new ConflictException("Une erreur est survenue")
+        }
+    }
+
+    async deleteInstrument(user: Partial<User | Professeur>, instrumentId: string) {
+        const professor=user as  Etudiant
+        if (user.role != RoleEnum.ETUDIANT) {
+            throw new UnauthorizedException()
+        }
+        if (!this.appService.isObjectIdValid(instrumentId)) {
+            throw new BadRequestException("L'id est invalide")
+        }
+        const instrument = await this.instrumentService.getInstrumentById(instrumentId)
+        if (!instrument){
+            throw new NotFoundException("L'instrument n'existe pas")
+        }
+        if (!professor.instruments.find((instrument)=> instrument._id==instrumentId)){
+            throw new NotFoundException("L'instrument n'existe pas")
+        }
+        try {
+            return await this.etudiantModel.updateOne(
+                {_id : user._id},
+                {
+                    $pull : { instruments : instrumentId}
+                }
+            )
+        }catch (e) {
+            throw new ConflictException("Une erreur est survenue lors de la suppression")
         }
     }
 
@@ -104,7 +175,6 @@ export class EtudiantService {
             const newUser = await this.userService.updateUser(user, updateEtudiantDto)
             return newEtudiant
         }catch (e) {
-            console.log(e)
             throw new ConflictException("Une erreur est survenue veuillez réessayer")
         }
     }

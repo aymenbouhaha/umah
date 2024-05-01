@@ -19,6 +19,7 @@ import {diskStorage} from "multer";
 import {FileInterceptor} from "@nestjs/platform-express";
 import { v4 as uuidv4 } from 'uuid';
 import {ChangePasswordDto} from "../user/dto/change-password.dto";
+import {AssginInstrumentDto} from "../professeur/dto/assgin-instrument.dto";
 
 
 @Controller('etudiant')
@@ -36,10 +37,18 @@ export class EtudiantController {
     return this.etudiantService.findByMail(email)
   }
 
+
   @Patch()
   @UseGuards(JwtAuthGuard)
   updateEtudiant(@UserDecorator() user : Partial<User>,@Body() updateUserDto : UpdateUserDto ){
     return this.etudiantService.updateEtudiant(user,updateUserDto)
+  }
+
+
+  @Patch("assign-instrument")
+  @UseGuards(JwtAuthGuard)
+  assignInstruments(@UserDecorator() user : Partial<User>,@Body() instrumentsDto : AssginInstrumentDto){
+    return this.etudiantService.assignInstrument(user, instrumentsDto)
   }
 
 
@@ -77,6 +86,12 @@ export class EtudiantController {
   )
   addProfilePicture(@UserDecorator() user : Partial<User>, @UploadedFile() profileImage : Express.Multer.File){
     return this.etudiantService.addProfilePicture(user,profileImage)
+  }
+
+  @Delete("instrument/:id")
+  @UseGuards(JwtAuthGuard)
+  deleteInstrument(@UserDecorator() user : Partial<User>,@Param("id") instrumentId : string){
+    return this.etudiantService.deleteInstrument(user,instrumentId)
   }
 
 }
